@@ -1,0 +1,87 @@
+---
+title: "Untitled"
+author: "Molly"
+date: '2022-06-22'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidytuesdayR)
+library(readr)
+```
+
+
+```{r}
+#import data
+pride_aggregates <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-06-07/pride_aggregates.csv')
+fortune_aggregates <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-06-07/fortune_aggregates.csv')
+static_list <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-06-07/static_list.csv')
+pride_sponsors <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-06-07/pride_sponsors.csv')
+corp_by_politician <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-06-07/corp_by_politician.csv')
+donors <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-06-07/donors.csv')
+
+```
+```{r}
+#inspect
+dim(fortune_aggregates)
+names(fortune_aggregates)
+glimpse(fortune_aggregates)
+view(fortune_aggregates)
+view(donors)
+```
+
+```{r}
+#renaming
+contributions <- fortune_aggregates %>% 
+  mutate(across(where(is.character),as.factor)) %>% 
+  rename(Total_Contributed = "Total Contributed")
+contributions
+```
+
+```{r}
+#plot
+contribution_chart <- contributions %>%
+  filter(Company != "Grand Total", Total_Contributed > 50000)
+  ggplot(data = contribution_chart, mapping = aes(y = fct_reorder(Company, Total_Contributed), x = Total_Contributed))+
+  geom_col()+
+    theme_classic()+
+    theme(axis.text.y = element_text(size = 10, vjust = 0.2, hjust = 0.2))+
+    labs(x = "Contributions to Anti-LGBTQ Politicians", y = "Company")+
+    geom_label(aes(label = scales::dollar(Total_Contributed)), position = position_dodge(width = 0.9), hjust = 1, vjust = -0.25)+
+    scale_x_continuous(labels = scales::dollar_format())
+contribution_chart
+
+```
+```{r}
+dim(static_list)
+names(static_list)
+glimpse(static_list)
+view(static_list)
+static_list
+```
+```{r}
+#renaming
+pride_contributions <- static_list %>% 
+  mutate(across(where(is.character),as.factor)) %>% 
+  rename(total_contributed = "Amount Contributed Across States", pride = "Pride?")
+pride_contributions
+```
+
+
+```{r}
+hypocrite_chart <- pride_contributions %>%
+  filter(Company != "Grand Total", total_contributed > 50000)
+  ggplot(data = hypocrite_chart, mapping = aes(y = fct_reorder(Company, total_contributed), x = total_contributed, fill = pride))+
+  geom_col()+
+    theme_classic()+
+    theme(axis.text.y = element_text(size = 10, vjust = 0.2))+
+    labs(x = "Contributions to Anti-LGBTQ Politicians", y = "Company")+
+    geom_label(aes(label = scales::dollar(total_contributed)), size = 3, fill = "white", hjust = .7)+
+    scale_x_continuous(labels = scales::dollar_format())+
+    scale_fill_manual(values = c("TRUE" = "pink"))+
+    guides(fill = guide_legend("Pride Donor"))
+contribution_chart
+```
+
